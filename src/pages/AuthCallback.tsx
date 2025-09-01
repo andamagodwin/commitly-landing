@@ -1,41 +1,30 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function AuthCallback() {
-  const [status, setStatus] = useState<'reading' | 'success' | 'error'>('reading')
-  const [message, setMessage] = useState('Processing GitHub authentication...')
-
-  const params = useMemo(() => new URLSearchParams(window.location.search), [])
+  const [deeplink, setDeeplink] = useState<string>('commitly://auth-callback')
 
   useEffect(() => {
-  const code = params.get('code')
-    const error = params.get('error')
+    const params = new URLSearchParams(window.location.search)
+    const userId = params.get('userId') ?? ''
+    const secret = params.get('secret') ?? ''
 
-    if (error) {
-      setStatus('error')
-      setMessage(`GitHub auth failed: ${error}`)
-      return
-    }
+    const qp = new URLSearchParams()
+    if (userId) qp.set('userId', userId)
+    if (secret) qp.set('secret', secret)
 
-    if (!code) {
-      setStatus('error')
-      setMessage('Missing code parameter in callback URL.')
-      return
-    }
+    const target = `commitly://auth-callback${qp.toString() ? `?${qp.toString()}` : ''}`
+    setDeeplink(target)
 
-    // Normally, you would POST { code, state } to your backend to exchange for an access token.
-    // Since this is a static front-end, we just show a friendly success message.
-    setStatus('success')
-    setMessage('GitHub code received. You can now close this window or return to the app.')
-  }, [params])
+    // Redirect immediately to the Commitly app via deep link
+    window.location.replace(target)
+  }, [])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white dark:bg-commitly p-6">
       <div className="max-w-md w-full p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-center">
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Commitly Auth</h1>
-        <p className="mt-3 text-gray-700 dark:text-gray-300">{message}</p>
-        {status === 'success' && (
-          <a href="/" className="inline-block mt-6 px-4 py-2 rounded bg-black text-white dark:bg-white dark:text-black">Return to Home</a>
-        )}
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Opening Commitly…</h1>
+        <p className="mt-3 text-gray-700 dark:text-gray-300">If you’re not redirected automatically, tap the button below.</p>
+        <a href={deeplink} className="inline-block mt-6 px-4 py-2 rounded bg-black text-white dark:bg-white dark:text-black">Open Commitly</a>
       </div>
     </div>
   )
